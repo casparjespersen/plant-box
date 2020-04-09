@@ -1,35 +1,37 @@
 import RPi.GPIO as GPIO
-import time
+from time import sleep
+from datetime import datetime
 
 
 PIN = 11
-VALUE = None
 
-
-def setValue(value):
-    global VALUE
-    GPIO.output(PIN, value)
-    print("Setting value to:", value)
-    VALUE = value
 
 def setup():
+    GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(PIN, GPIO.OUT)
-    setValue(GPIO.LOW)
+    GPIO.setup(PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-def toggleValue():
-    global VALUE
-    value = GPIO.HIGH if (VALUE == GPIO.LOW) else GPIO.LOW
-    setValue(value)
-
-def run():
-    for _ in range(10):
-        toggleValue()
-        time.sleep(2)
+def listen_for_press(fs: int):
+    state = 0
+    while True:
+        value = bool(GPIO.input(PIN))
+        if state:
+            if value:
+                state += 1
+            else:
+                yield state/fs
+                state = 0
+        elif value:
+            state = 1
+        sleep(1/fs)
 
 def main():
     setup()
-    run()
+    try:
+        for duration in listen_for_press(fs=100):
+            print("keypress", duration)
+    except KeyboardInterrupt:
+        pass
     GPIO.cleanup()
 
 if __name__ == "__main__":
