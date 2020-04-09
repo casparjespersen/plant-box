@@ -4,7 +4,7 @@ from functools import partial
 from controller import *
 
 keepalive = partial(pin_pulse, 0, reps=2)
-job = partial(pin_pulse, 1, reps=100)
+job = partial(pin_constant, 1, duration=10)
 
 
 def create_background_scheduler(interval: int = 10):
